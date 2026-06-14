@@ -69,7 +69,8 @@ async def _collect_stream(gen) -> str:
 
 
 async def _judge_faithfulness(question: str, context: str, answer: str) -> dict:
-    from openai import AsyncOpenAI
+    import asyncio
+    from openai import AsyncOpenAI, RateLimitError
 
     client = AsyncOpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
@@ -78,23 +79,30 @@ async def _judge_faithfulness(question: str, context: str, answer: str) -> dict:
     prompt = FAITHFULNESS_PROMPT.format(
         context=context, question=question, answer=answer
     )
-    response = await client.chat.completions.create(
-        model=settings.nvidia_model,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=150,
-        temperature=0.0,
-        stream=False,
-    )
-    raw = response.choices[0].message.content.strip()
-    try:
-        # Strip markdown code fences if present
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        return json.loads(raw)
-    except json.JSONDecodeError:
-        return {"score": 0.5, "reason": f"Could not parse judge response: {raw[:100]}"}
+
+    for attempt in range(4):
+        try:
+            response = await client.chat.completions.create(
+                model=settings.nvidia_model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=150,
+                temperature=0.0,
+                stream=False,
+            )
+            raw = response.choices[0].message.content.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+            return json.loads(raw)
+        except RateLimitError:
+            wait = 10 * (2 ** attempt)
+            print(f"    Rate limit hit — waiting {wait}s before retry {attempt + 1}/3...")
+            await asyncio.sleep(wait)
+        except json.JSONDecodeError:
+            return {"score": 0.5, "reason": f"Could not parse judge response: {raw[:100]}"}
+
+    return {"score": 0.5, "reason": "Rate limit retries exhausted"}
 
 
 def _key_fact_coverage(answer: str, key_facts: list[str]) -> float:
@@ -107,6 +115,8 @@ async def evaluate(sample: int | None = None) -> dict:
     gold = json.loads(GOLD_PATH.read_text())
     if sample:
         gold = gold[:sample]
+
+    import asyncio
 
     results = []
     async with AsyncSessionLocal() as session:
@@ -122,6 +132,9 @@ async def evaluate(sample: int | None = None) -> dict:
 
             coverage = _key_fact_coverage(answer, item["key_facts"])
             faithfulness = await _judge_faithfulness(item["question"], context_text, answer)
+
+            # Pace requests to stay under NVIDIA free-tier rate limits
+            await asyncio.sleep(3)
 
             results.append(
                 {

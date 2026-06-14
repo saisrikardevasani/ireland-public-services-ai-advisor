@@ -84,6 +84,7 @@ async def ingest_pages(session: AsyncSession, pages: list[dict]) -> dict:
                 document_id=doc.id,
                 chunk_index=raw_chunk["chunk_index"],
                 content=raw_chunk["content"],
+                parent_content=raw_chunk.get("parent_content"),
                 embedding=embedding,
                 token_count=raw_chunk["token_count"],
             )

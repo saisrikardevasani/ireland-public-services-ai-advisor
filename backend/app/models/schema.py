@@ -42,6 +42,7 @@ class Chunk(Base):
     )
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    parent_content: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Generated column — Postgres automatically keeps this in sync with `content`
     content_tsv: Mapped[str] = mapped_column(

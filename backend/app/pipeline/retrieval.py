@@ -1,12 +1,16 @@
-"""Hybrid retrieval: BM25 (tsvector) + dense (pgvector) fused with RRF.
+"""Hybrid retrieval: BM25 (tsvector) + dense (pgvector) fused with RRF,
+then reranked with a cross-encoder (v0.3).
 
-The pipeline:
-  1. Run BM25 search → top 20 results by ts_rank
-  2. Run dense cosine search → top 20 results by vector distance
-  3. Fuse with Reciprocal Rank Fusion → top N by combined score
+Pipeline:
+  1. BM25 search  → top 20 by ts_rank
+  2. Dense search → top 20 by cosine similarity
+  3. RRF fusion   → top 20 combined (expanded pool for reranker)
+  4. Rerank       → cross-encoder scores all 20, returns top N
 
-Why RRF? It's parameter-free and consistently outperforms linear combination
-of scores in cross-system retrieval fusion tasks.
+Why RRF before reranking?
+  RRF gives the reranker a diverse, high-recall candidate set.
+  The reranker then applies precision — it reads query+passage together,
+  something embedding models can't do.
 """
 
 import logging
@@ -20,7 +24,6 @@ from app.ingestion.embedder import embed_query
 
 logger = logging.getLogger(__name__)
 
-# RRF constant — 60 is the conventional default from the original RRF paper
 RRF_K = 60
 
 
@@ -29,23 +32,21 @@ class RetrievedChunk:
     id: str
     document_id: str
     content: str
+    parent_content: str | None
     url: str
     title: str
     rrf_score: float
 
 
 async def bm25_search(session: AsyncSession, query: str, k: int) -> list[dict]:
-    """Full-text search using Postgres tsvector + ts_rank_cd.
-
-    plainto_tsquery handles natural language queries safely —
-    tokenizes and stems without requiring special syntax from the user.
-    """
+    """Full-text search using Postgres tsvector + ts_rank_cd."""
     result = await session.execute(
         text("""
             SELECT
                 CAST(c.id AS TEXT)          AS id,
                 CAST(c.document_id AS TEXT) AS document_id,
                 c.content,
+                c.parent_content,
                 d.url,
                 d.title,
                 ts_rank_cd(c.content_tsv, plainto_tsquery('english', :query)) AS score
@@ -63,15 +64,7 @@ async def bm25_search(session: AsyncSession, query: str, k: int) -> list[dict]:
 async def dense_search(
     session: AsyncSession, query_embedding: list[float], k: int
 ) -> list[dict]:
-    """Cosine similarity search via pgvector.
-
-    The <=> operator returns cosine DISTANCE (0=identical, 2=opposite).
-
-    We inline the embedding as a SQL literal rather than using a bound parameter
-    because asyncpg's parameter binding conflicts with pgvector's ::vector cast.
-    The embedding is our own model output — not user input — so inlining is safe.
-    """
-    # Format as pgvector literal: '[0.123,0.456,...]'
+    """Cosine similarity search via pgvector (HNSW index from migration 002)."""
     vec_literal = "[" + ",".join(f"{x:.8f}" for x in query_embedding) + "]"
 
     result = await session.execute(
@@ -80,6 +73,7 @@ async def dense_search(
                 CAST(c.id AS TEXT)          AS id,
                 CAST(c.document_id AS TEXT) AS document_id,
                 c.content,
+                c.parent_content,
                 d.url,
                 d.title,
                 1 - (c.embedding <=> '{vec_literal}'::vector) AS score
@@ -99,11 +93,7 @@ def rrf_fusion(
     dense_results: list[dict],
     final_k: int,
 ) -> list[RetrievedChunk]:
-    """Merge two ranked lists with Reciprocal Rank Fusion.
-
-    score(doc) = 1/(k + rank_in_bm25) + 1/(k + rank_in_dense)
-    Documents that appear in both lists get boosted.
-    """
+    """Merge two ranked lists with Reciprocal Rank Fusion."""
     scores: dict[str, float] = {}
     metadata: dict[str, dict] = {}
 
@@ -124,6 +114,7 @@ def rrf_fusion(
             id=doc_id,
             document_id=metadata[doc_id]["document_id"],
             content=metadata[doc_id]["content"],
+            parent_content=metadata[doc_id].get("parent_content"),
             url=metadata[doc_id]["url"],
             title=metadata[doc_id]["title"],
             rrf_score=score,
@@ -133,15 +124,9 @@ def rrf_fusion(
 
 
 async def retrieve(session: AsyncSession, query: str) -> list[RetrievedChunk]:
-    """Run hybrid retrieval for a user query.
-
-    Returns the top N chunks ranked by RRF score.
-    """
-    # Embed the query using the same model used at ingestion time
+    """Run hybrid retrieval + reranking for a user query."""
     query_embedding = embed_query(query)
 
-    # SQLAlchemy async sessions don't support concurrent operations on the same connection,
-    # so we run these sequentially. Each query takes ~1-5ms; parallelism isn't needed yet.
     bm25_results = await bm25_search(session, query, settings.bm25_top_k)
     dense_results = await dense_search(session, query_embedding, settings.dense_top_k)
 
@@ -151,6 +136,23 @@ async def retrieve(session: AsyncSession, query: str) -> list[RetrievedChunk]:
         len(dense_results),
     )
 
-    chunks = rrf_fusion(bm25_results, dense_results, settings.final_top_k)
-    logger.info("Returning %d chunks after RRF fusion for query: %s...", len(chunks), query[:60])
+    # Pass a larger pool to the reranker (top 20 instead of top 5)
+    # so it has more candidates to choose from
+    rerank_pool = settings.bm25_top_k if settings.reranker_enabled else settings.final_top_k
+    candidates = rrf_fusion(bm25_results, dense_results, rerank_pool)
+
+    if settings.reranker_enabled:
+        from app.pipeline.reranker import rerank
+        chunks = rerank(query, candidates, settings.final_top_k)
+        logger.info(
+            "Returning %d chunks after reranking for query: %s...",
+            len(chunks), query[:60],
+        )
+    else:
+        chunks = candidates[: settings.final_top_k]
+        logger.info(
+            "Returning %d chunks after RRF (reranker disabled) for query: %s...",
+            len(chunks), query[:60],
+        )
+
     return chunks

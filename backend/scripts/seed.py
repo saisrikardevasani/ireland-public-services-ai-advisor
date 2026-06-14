@@ -1,13 +1,7 @@
 """Load fixture documents into the database for local development.
 
-This is the fast alternative to crawling — loads pre-written Citizens
-Information content from fixtures/citizens_information.json.
-
-Use this when:
-  - You want a quick local demo (takes ~30 seconds)
-  - The live site is behind bot protection
-
-Use scripts/ingest.py with --live flag for production crawling.
+Loads both Citizens Information and Revenue.ie fixture files.
+Idempotent — rerun safely; unchanged documents are skipped.
 
 Usage:
     python scripts/seed.py
@@ -31,23 +25,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-FIXTURES_PATH = Path(__file__).parent.parent / "fixtures" / "citizens_information.json"
+FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
+
+FIXTURE_FILES = [
+    FIXTURES_DIR / "citizens_information.json",
+    FIXTURES_DIR / "revenue_ie.json",
+]
 
 
 async def main() -> None:
-    logger.info("Loading fixtures from %s", FIXTURES_PATH)
-    pages = json.loads(FIXTURES_PATH.read_text())
-    logger.info("Loaded %d fixture documents", len(pages))
+    all_pages = []
+    for path in FIXTURE_FILES:
+        pages = json.loads(path.read_text())
+        logger.info("Loaded %d pages from %s", len(pages), path.name)
+        all_pages.extend(pages)
 
-    logger.info("Embedding and indexing (first run downloads the model ~134MB)...")
+    logger.info("Total: %d documents to ingest", len(all_pages))
+    logger.info("Embedding and indexing (first run downloads models)...")
+
     async with AsyncSessionLocal() as session:
-        stats = await ingest_pages(session, pages)
+        stats = await ingest_pages(session, all_pages)
 
     logger.info(
         "Done: %d new, %d updated, %d skipped, %d chunks created",
         stats["new"], stats["updated"], stats["skipped"], stats["chunks_created"],
     )
-    logger.info("Your database is ready. Start the backend with: make backend")
+    logger.info("Database ready. Start the backend with: make backend")
 
 
 if __name__ == "__main__":

@@ -45,9 +45,9 @@ FORMAT:
 def _build_context_block(chunks: list[RetrievedChunk]) -> str:
     parts = []
     for i, chunk in enumerate(chunks, start=1):
-        parts.append(
-            f"[{i}] SOURCE: {chunk.title}\nURL: {chunk.url}\n\n{chunk.content}"
-        )
+        # Use the wider parent window if available (v0.3 hierarchical chunking)
+        context = chunk.parent_content or chunk.content
+        parts.append(f"[{i}] SOURCE: {chunk.title}\nURL: {chunk.url}\n\n{context}")
     return "\n\n---\n\n".join(parts)
 
 

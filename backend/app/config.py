@@ -30,8 +30,12 @@ class Settings(BaseSettings):
     # Retrieval — how many candidates each retriever returns before RRF fusion
     bm25_top_k: int = 20
     dense_top_k: int = 20
-    # Final chunks sent to Claude as context
+    # Final chunks sent to the LLM as context
     final_top_k: int = 5
+
+    # Reranker (v0.3) — cross-encoder reranking after RRF fusion
+    reranker_model: str = "BAAI/bge-reranker-base"
+    reranker_enabled: bool = True
 
     # App
     debug: bool = False

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ import { ChatMessage } from "@/components/ChatMessage";
 import { streamChat } from "@/lib/api";
 import type { Message } from "@/types";
 
-export default function ChatPage() {
+function ChatContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -34,10 +34,7 @@ export default function ChatPage() {
     setInput("");
     setIsStreaming(true);
 
-    // Add user message
     setMessages((prev) => [...prev, { role: "user", content: question }]);
-
-    // Add a placeholder assistant message that we'll stream into
     setMessages((prev) => [
       ...prev,
       { role: "assistant", content: "", isStreaming: true },
@@ -84,7 +81,6 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shrink-0">
         <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Home">
           ← Back
@@ -97,7 +93,6 @@ export default function ChatPage() {
         </div>
       </header>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
           {messages.length === 0 && (
@@ -116,7 +111,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Input */}
       <div className="shrink-0 bg-gray-50 border-t border-gray-200 px-4 py-4">
         <div className="max-w-3xl mx-auto">
           <ChatInput
@@ -131,5 +125,13 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatContent />
+    </Suspense>
   );
 }

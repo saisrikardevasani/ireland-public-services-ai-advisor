@@ -47,7 +47,7 @@ primary_region = "lhr"  # London — closest to Ireland
     timeout = "10s"
     grace_period = "30s"
     method = "GET"
-    path = "/health"
+    path = "/v1/health"
 
 [mounts]
   # Model cache persisted across deploys so we don't re-download 400MB each time

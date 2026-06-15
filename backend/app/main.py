@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,10 +11,12 @@ app = FastAPI(
     description="RAG system over Irish government and EU legislative sources.",
 )
 
-# Allow the Next.js dev server to call our API
+_raw = os.getenv("CORS_ORIGINS", "http://localhost:3000")
+_origins = [o.strip() for o in _raw.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

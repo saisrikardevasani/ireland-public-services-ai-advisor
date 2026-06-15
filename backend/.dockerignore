@@ -1,15 +1,22 @@
-.env
-.venv/
-venv/
-__pycache__/
-*.pyc
-*.pyo
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-htmlcov/
-.coverage
-tests/
-eval/
-scripts/
+# Frontend — not needed in backend image
+frontend/
+
+# Backend dev artifacts
+backend/.env
+backend/.venv/
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.ruff_cache/
+backend/htmlcov/
+backend/.coverage
+backend/tests/
+backend/eval/
+backend/scripts/
+
+# Root-level artifacts
 .DS_Store
+*.swp

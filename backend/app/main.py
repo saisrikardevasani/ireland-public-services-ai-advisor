@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import chat, health
 
 app = FastAPI(
-    title="EU & Ireland Public Services AI Advisor",
+    title="Ireland Public Services AI Advisor",
     version="0.1.0",
     description="RAG system over Irish government and EU legislative sources.",
 )

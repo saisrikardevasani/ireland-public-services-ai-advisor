@@ -1,3 +1,6 @@
+# ── Infographic assets (local design files, not part of the app) ─────────────
+assets/
+
 # ── Secrets — NEVER commit these ─────────────────────────────────────────────
 .env
 backend/.env

@@ -9,7 +9,7 @@ function CitationChip({ citation }: { citation: Citation }) {
       target="_blank"
       rel="noopener noreferrer"
       title={citation.snippet}
-      className="inline-flex items-center gap-1 text-xs bg-blue-50 border border-blue-200 text-blue-700 rounded px-1.5 py-0.5 hover:bg-blue-100 transition-colors"
+      className="inline-flex items-center gap-1 text-xs bg-forest-50 border border-forest-200 text-forest-700 rounded-md px-2 py-1 hover:bg-forest-100 transition-colors font-medium"
     >
       [{citation.n}] {citation.title}
     </a>
@@ -20,28 +20,37 @@ export function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-4`}>
-      <div className={`max-w-[80%] ${isUser ? "order-2" : "order-1"}`}>
-        {/* Role label */}
-        <p className={`text-xs font-medium mb-1 ${isUser ? "text-right text-gray-400" : "text-gray-500"}`}>
-          {isUser ? "You" : "Advisor"}
-        </p>
+    <div className={`flex gap-3 mb-7 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
 
-        {/* Message bubble */}
+      {/* Avatar */}
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${
+          isUser ? "bg-stone-800 text-white" : "bg-forest-800 text-white"
+        }`}
+      >
+        {isUser ? "U" : "AI"}
+      </div>
+
+      <div className={`max-w-[78%] flex flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}>
+        <span className="text-xs text-stone-400 font-medium px-1">
+          {isUser ? "You" : "Advisor"}
+        </span>
+
+        {/* Bubble */}
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
             isUser
-              ? "bg-blue-600 text-white rounded-tr-sm"
-              : "bg-white border border-gray-200 text-gray-900 rounded-tl-sm shadow-sm"
+              ? "bg-stone-900 text-stone-50 rounded-tr-sm"
+              : "bg-white border border-stone-200 text-stone-800 rounded-tl-sm shadow-sm"
           } ${message.isStreaming ? "streaming-cursor" : ""}`}
         >
           {message.content || (message.isStreaming ? "" : "…")}
         </div>
 
-        {/* Citations — shown below the assistant bubble after generation completes */}
+        {/* Citations */}
         {!isUser && message.citations && message.citations.length > 0 && !message.isStreaming && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="text-xs text-gray-400 self-center">Sources:</span>
+          <div className="flex flex-wrap gap-1.5 px-1 mt-0.5">
+            <span className="text-xs text-stone-400 self-center mr-0.5">Sources:</span>
             {message.citations.map((c) => (
               <CitationChip key={c.n} citation={c} />
             ))}

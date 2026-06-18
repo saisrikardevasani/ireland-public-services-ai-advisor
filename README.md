@@ -1,4 +1,4 @@
-# EU & Ireland Public Services AI Advisor
+# Ireland Public Services AI Advisor
 
 A RAG (Retrieval-Augmented Generation) chatbot that answers questions about Irish public services — immigration, tax, benefits, housing, and employment — with **cited, grounded answers** linked directly to official government sources.
 
@@ -8,13 +8,13 @@ Built as a real engineering project from scratch, not a tutorial. Every answer c
 
 ## Try It Live
 
-> **Frontend (chat UI):** https://eu-and-ireland-public-services-ai-a.vercel.app
+> **Frontend (chat UI):** https://irish-public-services-ai-advisor.vercel.app
 >
 > **Backend API:** https://srikarcod3r-eu-ireland-advisor.hf.space/docs
 
-**A note on cold starts:** The backend runs on Hugging Face Spaces free tier, which puts the container to sleep after about 15 minutes of inactivity. If you send a message and it takes 10–20 seconds with no response, the backend is just waking up — give it a moment and it'll be fine. Subsequent messages are instant.
+**A note on cold starts:** The backend runs on Hugging Face Spaces free tier, which sleeps after ~15 minutes of inactivity. The chat page pings the backend automatically when it loads, so by the time you type your question it's usually warm. If it isn't, an amber banner appears telling you it's waking up (~30s). Subsequent messages are instant.
 
-If the chat doesn't respond at all, you can check whether the backend is alive by visiting:
+If the chat doesn't respond at all, check whether the backend is alive:
 https://srikarcod3r-eu-ireland-advisor.hf.space/v1/health
 
 It should return `{"status":"ok","database":"connected"}`. If it does, the app is up.
@@ -211,8 +211,8 @@ Everything running live at zero cost:
 ### 1. Clone and configure
 
 ```bash
-git clone https://github.com/saisrikardevasani/eu-ireland-public-services-ai-advisor.git
-cd eu-ireland-public-services-ai-advisor
+git clone https://github.com/saisrikardevasani/ireland-public-services-ai-advisor.git
+cd ireland-public-services-ai-advisor
 
 cp .env.example backend/.env
 # Open backend/.env and paste your NVIDIA_API_KEY

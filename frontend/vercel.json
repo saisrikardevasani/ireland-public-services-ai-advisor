@@ -2,6 +2,6 @@
   "framework": "nextjs",
   "regions": ["lhr1"],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://eu-ireland-advisor.fly.dev"
+    "NEXT_PUBLIC_API_URL": "https://srikarcod3r-eu-ireland-advisor.hf.space"
   }
 }

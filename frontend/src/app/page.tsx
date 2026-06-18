@@ -54,7 +54,7 @@ const STATS = [
   { value: "100%", label: "Recall@5" },
   { value: "1.0", label: "Avg rank" },
   { value: "0.93", label: "Faithfulness" },
-  { value: "20", label: "Documents" },
+  { value: "1,640", label: "Documents" },
   { value: "$0", label: "Hosting / mo" },
 ];
 
@@ -86,6 +86,9 @@ export default function HomePage() {
             </a>
             <a href="#story" className="hidden md:block text-sm text-forest-300 hover:text-white transition-colors">
               Story
+            </a>
+            <a href="#terms" className="hidden md:block text-sm text-forest-300 hover:text-white transition-colors">
+              Terms &amp; Privacy
             </a>
             <Link
               href="/chat"
@@ -310,6 +313,79 @@ export default function HomePage() {
               </svg>
               Send feedback
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Terms & Privacy ────────────────────────────────────── */}
+      <section id="terms" className="border-t border-stone-200 bg-stone-50">
+        <div className="max-w-5xl mx-auto px-6 py-16">
+          <p className="text-forest-600 text-xs font-semibold uppercase tracking-[0.15em] mb-4">Terms &amp; Privacy</p>
+          <h2 className="font-serif text-2xl text-stone-900 mb-8">
+            How this service works and what you should know.
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">Not legal or professional advice</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  All answers are informational summaries of publicly available official guidance.
+                  Nothing here constitutes legal, tax, immigration, or financial advice.
+                  Always verify with the relevant authority (Revenue, DSP, Citizens Information,
+                  the RTB, WRC, etc.) or consult a qualified professional before acting on any information.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">AI can make mistakes</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  This tool uses large language models to interpret and summarise source material.
+                  Rates, thresholds, eligibility rules, and procedures change regularly.
+                  Always click through to the cited source to verify you have the most current information.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">No guarantee of accuracy or completeness</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  The knowledge base is updated periodically but may not reflect the very latest
+                  guidance. Do not rely solely on this tool for decisions with significant legal,
+                  financial, or health consequences.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">How your questions are processed</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  When you send a question, it is transmitted to <strong>NVIDIA&apos;s AI inference API</strong>
+                  {" "}(running Meta&apos;s Llama 3.3 70B model) to generate a response.
+                  NVIDIA operates in the United States. By using this service you acknowledge that
+                  your query is processed by a US-based third party. See{" "}
+                  <a href="https://www.nvidia.com/en-us/about-nvidia/privacy-policy/" target="_blank" rel="noopener noreferrer" className="underline text-forest-600 hover:text-forest-800">
+                    NVIDIA&apos;s privacy policy
+                  </a>.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">What we do not store</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  This service does not log, store, or retain your questions or answers.
+                  No user accounts, no session history, no analytics tied to your queries.
+                  The only data stored is the curated knowledge base of official Irish guidance.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-stone-900 mb-2">Do not include personal information</h3>
+                <p className="text-stone-500 text-sm leading-relaxed">
+                  Do not include PPS numbers, addresses, passport numbers, financial account
+                  details, health information, or other sensitive personal data in your questions.
+                  Phrase queries in general terms — e.g. &ldquo;am I eligible for Jobseeker&apos;s
+                  Benefit if I was made redundant?&rdquo; rather than including personal identifiers.
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>

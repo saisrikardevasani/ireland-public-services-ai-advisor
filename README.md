@@ -26,10 +26,10 @@ It should return `{"status":"ok","database":"connected"}`. If it does, the app i
 Ask something like *"How do I apply for a medical card?"* or *"What's the minimum wage in Ireland?"* and the system:
 
 1. Converts your question into a 384-dimensional embedding vector
-2. Runs **hybrid retrieval** — BM25 keyword search and dense vector search — across 20 official government documents
+2. Runs **hybrid retrieval** — BM25 keyword search and dense vector search — across 1,640 official government documents
 3. Merges both result lists using **Reciprocal Rank Fusion (RRF)** to get the best 20 candidates
 4. Re-ranks them with a **cross-encoder** (reads query + passage together — much more accurate than cosine similarity alone) to pick the top 5
-5. Streams a grounded answer token-by-token from **Llama 3.1** via the NVIDIA free API
+5. Streams a grounded answer token-by-token from **Llama 3.3 70B** via the NVIDIA free API
 6. Returns citation chips — every claim is linked to the exact government page it came from
 
 The model is explicitly instructed not to answer from general knowledge. If it's not in the retrieved documents, it says so.
@@ -63,7 +63,7 @@ top 20 by term frequency        top 20 by cosine similarity
       picks top 5 — uses parent chunk for wider context
                     │
                     ▼
-       [Llama 3.1 8B via NVIDIA NIM]
+       [Llama 3.3 70B via NVIDIA NIM]
        streams answer with [n] citation markers
                     │
                     ▼
@@ -84,7 +84,7 @@ top 20 by term frequency        top 20 by cosine similarity
 | **Cache** | Redis (serverless) | Free (Upstash) |
 | **Embeddings** | BAAI/bge-small-en-v1.5 | Free (runs locally in container) |
 | **Reranker** | BAAI/bge-reranker-base | Free (runs locally in container) |
-| **LLM** | Llama 3.1 8B via NVIDIA NIM | Free tier |
+| **LLM** | Llama 3.3 70B via NVIDIA NIM | Free tier |
 | **Migrations** | Alembic | — |
 
 **Total hosting cost: $0/month.**
@@ -93,31 +93,18 @@ top 20 by term frequency        top 20 by cosine similarity
 
 ## What's Covered
 
-The knowledge base has 20 documents across two official sources:
+The knowledge base has **1,640 documents** across six official Irish government sources (16,326 vector chunks in Supabase):
 
-**Citizens Information** (15 documents)
-- Stamp 1G — Third Level Graduate Programme
-- Critical Skills Employment Permit
-- IRP (Irish Residence Permit) registration
-- PPSN — Personal Public Service Number
-- Medical Card and GP Visit Card
-- USC — Universal Social Charge
-- How income tax is calculated
-- PAYE Tax Credit
-- Minimum Wage
-- Jobseeker's Benefit
-- Jobseeker's Allowance
-- Child Benefit
-- Tenants' rights and types of tenancy
-- Opening a bank account in Ireland
-- Employment Permits overview
+| Source | Coverage |
+|---|---|
+| **Citizens Information** | Immigration, tax, welfare, healthcare, housing, employment |
+| **Revenue.ie** | PAYE, VAT, CGT, income tax, credits, tax returns |
+| **Gov.ie / DSP** | Department of Social Protection — all benefits and schemes |
+| **RTB** | Residential Tenancies Board — landlord/tenant rights, disputes |
+| **WRC** | Workplace Relations Commission — employment rights, complaints |
+| **ISD / Gov.ie** | Irish immigration (visa, IRP, employment permits) |
 
-**Revenue.ie** (5 documents)
-- What is PAYE?
-- Rent Tax Credit
-- Capital Gains Tax (CGT)
-- Who must file a tax return
-- Flat Rate Expenses
+All content is crawled directly from official government websites and re-indexed periodically.
 
 ---
 
@@ -140,6 +127,13 @@ Everything running live at zero cost:
 - Frontend on Vercel
 - Database on Supabase (PostgreSQL + pgvector)
 - Cache on Upstash (serverless Redis)
+
+### v0.5 — Expanded knowledge base + privacy notice
+- Knowledge base scaled from 20 to **1,640 documents** across six sources (Citizens Information, Revenue, Gov.ie/DSP, RTB, WRC, ISD)
+- 16,326 vector chunks indexed in Supabase
+- Multi-source web crawler with per-site URL filters, sitemap support, and brotli-safe HTTP headers
+- **Terms & Privacy notice added to the UI** — users are informed that queries are processed by NVIDIA's API (US-based, Llama 3.3 70B) before they send their first message
+- LLM upgraded from Llama 3.1 8B to Llama 3.3 70B for better answer quality
 
 ---
 
@@ -314,7 +308,7 @@ Both database URLs are required. They point to the same database — the differe
 |---|---|---|
 | `LLM_PROVIDER` | `nvidia` | `nvidia` to use NVIDIA NIM (free), or `anthropic` to use Claude. |
 | `NVIDIA_API_KEY` | — | Required when `LLM_PROVIDER=nvidia`. Get a free key at [build.nvidia.com](https://build.nvidia.com). |
-| `NVIDIA_MODEL` | `meta/llama-3.1-8b-instruct` | Fast and free. `meta/llama-3.3-70b-instruct` gives better quality but has a ~36s cold start on the free tier. |
+| `NVIDIA_MODEL` | `meta/llama-3.3-70b-instruct` | Best quality on the free tier. Higher latency on first request (~30s cold start). |
 | `ANTHROPIC_API_KEY` | — | Required when `LLM_PROVIDER=anthropic`. Get a key at [console.anthropic.com](https://console.anthropic.com). |
 
 ### Embeddings & Reranking
@@ -357,15 +351,23 @@ Run against 30 gold Q&A pairs covering all 20 documents.
 
 ---
 
-## Disclaimer
+## Terms & Privacy
 
-This is an informational tool, not legal or professional advice. Always check directly with the official sources:
+**Not legal or professional advice.** All answers are informational summaries of publicly available official guidance. Nothing here constitutes legal, tax, immigration, or financial advice. Always verify with the relevant authority or consult a qualified professional before acting on any information.
 
+**How queries are processed.** When a user sends a question, it is transmitted to NVIDIA's AI inference API (Llama 3.3 70B, US-based) to generate a response. This service does not log, store, or retain user queries. See [NVIDIA's privacy policy](https://www.nvidia.com/en-us/about-nvidia/privacy-policy/) for how they handle inference requests.
+
+**Do not include personal information** in queries — no PPS numbers, addresses, passport numbers, or financial account details.
+
+**Official sources:**
 - [citizensinformation.ie](https://www.citizensinformation.ie)
 - [revenue.ie](https://www.revenue.ie)
+- [gov.ie](https://www.gov.ie)
 - [irishimmigration.ie](https://www.irishimmigration.ie)
+- [rtb.ie](https://www.rtb.ie)
+- [workplacerelations.ie](https://www.workplacerelations.ie)
 
-The knowledge base was seeded in June 2026. Government policies change — always verify with the official source before acting on anything.
+The knowledge base was last crawled in June 2026. Government policies change — always verify with the official source before acting on anything.
 
 ---
 

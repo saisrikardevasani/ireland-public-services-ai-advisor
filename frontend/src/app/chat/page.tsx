@@ -152,7 +152,7 @@ function ChatContent() {
           {/* Empty state */}
           {messages.length === 0 && (
             <div className="mt-4">
-              <div className="text-center mb-10">
+              <div className="text-center mb-8">
                 <div className="w-16 h-16 rounded-2xl bg-forest-800 flex items-center justify-center mx-auto mb-5 shadow-sm">
                   <span className="text-3xl">🏛️</span>
                 </div>
@@ -161,8 +161,36 @@ function ChatContent() {
                 </h2>
                 <p className="text-stone-500 text-sm max-w-sm mx-auto leading-relaxed">
                   Every answer is grounded in official sources —
-                  Citizens Information, Revenue, ISD, DSP, HSE.
+                  Citizens Information, Revenue, Gov.ie, DSP, RTB, WRC.
                 </p>
+              </div>
+
+              {/* ── Terms & Privacy Notice ─────────────────────────── */}
+              <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm space-y-3">
+                <div className="flex items-start gap-2.5">
+                  <svg className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                  </svg>
+                  <p className="font-semibold text-amber-800">Before you begin — please read</p>
+                </div>
+                <ul className="space-y-2 text-amber-900 leading-relaxed pl-1">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-600 shrink-0" />
+                    <span><strong>Not legal or professional advice.</strong> Answers are informational summaries of official guidance. Always verify with the relevant authority (Revenue, DSP, Citizens Information, etc.) or consult a qualified solicitor, accountant, or advisor before making decisions.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-600 shrink-0" />
+                    <span><strong>Your questions are processed by AI.</strong> Queries are sent to NVIDIA&apos;s API (Llama 3.3 model, US-based) to generate answers. Do not include personal details such as your PPS number, address, income figures, or health information in your questions.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-600 shrink-0" />
+                    <span><strong>No data is stored by this service.</strong> We do not log, store, or share your questions. See NVIDIA&apos;s <a href="https://www.nvidia.com/en-us/about-nvidia/privacy-policy/" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-700">privacy policy</a> for how they handle inference requests.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-1.5 w-1 h-1 rounded-full bg-amber-600 shrink-0" />
+                    <span><strong>AI can make mistakes.</strong> Rates, thresholds, and rules change. Always check the cited source link for the most current information.</span>
+                  </li>
+                </ul>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3">
@@ -197,7 +225,7 @@ function ChatContent() {
             disabled={isStreaming}
           />
           <p className="text-center text-xs text-stone-400 mt-3 leading-relaxed">
-            Informational only · Not legal advice · Sources cited for every claim
+            Informational only · Not legal or professional advice · Queries processed by NVIDIA AI (US) · Do not include personal details
           </p>
         </div>
       </div>

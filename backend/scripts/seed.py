@@ -1,7 +1,7 @@
 """Load fixture documents into the database for local development.
 
-Loads both Citizens Information and Revenue.ie fixture files.
-Idempotent — rerun safely; unchanged documents are skipped.
+Auto-discovers all *.json files in backend/fixtures/ — add a new fixture file
+and rerun to ingest it. Idempotent — unchanged documents are skipped.
 
 Usage:
     python scripts/seed.py
@@ -27,15 +27,10 @@ logger = logging.getLogger(__name__)
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures"
 
-FIXTURE_FILES = [
-    FIXTURES_DIR / "citizens_information.json",
-    FIXTURES_DIR / "revenue_ie.json",
-]
-
 
 async def main() -> None:
     all_pages = []
-    for path in FIXTURE_FILES:
+    for path in sorted(FIXTURES_DIR.glob("*.json")):
         pages = json.loads(path.read_text())
         logger.info("Loaded %d pages from %s", len(pages), path.name)
         all_pages.extend(pages)

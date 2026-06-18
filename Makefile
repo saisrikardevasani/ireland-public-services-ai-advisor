@@ -30,6 +30,11 @@ migrate:
 seed:
 	cd backend && .venv/bin/python scripts/seed.py
 
+# Seed the production Supabase database.
+# Usage: DATABASE_URL="postgresql+asyncpg://..." DATABASE_SYNC_URL="postgresql://..." make seed-prod
+seed-prod:
+	cd backend && DATABASE_URL=$(DATABASE_URL) DATABASE_SYNC_URL=$(DATABASE_SYNC_URL) .venv/bin/python scripts/seed.py
+
 # Live crawl — requires bot protection bypass or approved access
 ingest:
 	cd backend && .venv/bin/python scripts/ingest.py --max-pages 50

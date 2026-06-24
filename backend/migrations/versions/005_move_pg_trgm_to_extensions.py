@@ -23,8 +23,29 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.execute("ALTER EXTENSION pg_trgm SET SCHEMA extensions;")
+    # Supabase-only: skip on vanilla Postgres (CI, local dev) where
+    # the extensions schema does not exist.
+    op.execute("""
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'extensions')
+               AND EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')
+            THEN
+                ALTER EXTENSION pg_trgm SET SCHEMA extensions;
+            END IF;
+        END
+        $$;
+    """)
 
 
 def downgrade() -> None:
-    op.execute("ALTER EXTENSION pg_trgm SET SCHEMA public;")
+    op.execute("""
+        DO $$
+        BEGIN
+            IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_trgm')
+            THEN
+                ALTER EXTENSION pg_trgm SET SCHEMA public;
+            END IF;
+        END
+        $$;
+    """)

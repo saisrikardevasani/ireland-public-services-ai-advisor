@@ -14,19 +14,33 @@ from app.api import chat, feedback, health
 logger = logging.getLogger(__name__)
 
 
+def _warm_models() -> None:
+    """Load both ML models into memory in a background thread.
+
+    Running this in a thread lets uvicorn start accepting connections
+    (and /health return 200) immediately, while models warm concurrently.
+    By the time a real user types their first question, both models are
+    already hot — the thread takes ~30-60s on HF free-tier CPU.
+    """
+    try:
+        logger.info("Warming embedding model in background...")
+        from app.ingestion.embedder import embed_query
+        embed_query("warmup")
+
+        logger.info("Warming reranker model in background...")
+        from app.pipeline.reranker import _get_reranker
+        _get_reranker()
+
+        logger.info("Both models ready.")
+    except Exception:
+        logger.exception("Background model warmup failed")
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # Pre-warm both models into memory so the first real request isn't slow.
-    # Health check only returns 200 after this block completes.
-    logger.info("Pre-warming embedding model...")
-    from app.ingestion.embedder import embed_query
-    embed_query("warmup")
-
-    logger.info("Pre-warming reranker model...")
-    from app.pipeline.reranker import _get_reranker
-    _get_reranker()
-
-    logger.info("Models ready.")
+    import asyncio
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, _warm_models)
     yield
 
 

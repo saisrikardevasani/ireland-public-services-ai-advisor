@@ -13,9 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
 
-# Pre-download the embedding model so cold starts are fast
-# The model is cached in /root/.cache/huggingface inside the image
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-small-en-v1.5')"
+# Pre-download both models into the image so first-request latency is just CPU inference,
+# not a 280MB download. Models are cached in /root/.cache/huggingface.
+RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; SentenceTransformer('BAAI/bge-small-en-v1.5'); CrossEncoder('BAAI/bge-reranker-base')"
 
 EXPOSE 8000
 

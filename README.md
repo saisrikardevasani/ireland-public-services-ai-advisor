@@ -1,3 +1,12 @@
+---
+title: EU Ireland Public Services AI Advisor
+emoji: 🏛️
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Ireland Public Services AI Advisor
 
 A production RAG chatbot for Irish public services. Ask about tax, immigration, benefits, housing, employment, or healthcare. Get an answer grounded in and cited from official government pages.
